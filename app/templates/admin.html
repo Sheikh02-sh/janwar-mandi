@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<h1>Admin panel</h1>
+<div class="tabs">
+  {% for s in ['pending', 'active', 'rejected', 'sold'] %}
+    <a class="tab {{ 'on' if s == status }}" href="{{ url_for('admin.dashboard', status=s) }}">{{ s|capitalize }} ({{ counts.get(s, 0) }})</a>
+  {% endfor %}
+</div>
+{% if not fb_ok %}<div class="flash flash-info">Facebook is not configured yet. Add FB_PAGE_ID and FB_PAGE_ACCESS_TOKEN in .env to enable auto-posting.</div>{% endif %}
+
+{% if ads %}
+<div class="list">
+  {% for ad in ads %}
+  <div class="list-item">
+    {% if ad.images %}<img src="{{ url_for('static', filename=ad.images[0].file_path) }}" alt="">{% else %}<div class="no-img small">No photo</div>{% endif %}
+    <div class="grow">
+      <a class="card-title" href="{{ url_for('ads.detail', ad_id=ad.id) }}">{{ ad.title }}</a>
+      <div class="meta">Rs {{ ad.price|pkr }} · {{ ad.city }} · {{ ad.seller.name }} ({{ ad.seller.phone }})</div>
+      {% if ad.fb_post %}
+        <span class="status status-{{ 'active' if ad.fb_post.status == 'posted' else 'rejected' }}">Facebook: {{ ad.fb_post.status }}</span>
+        {% if ad.fb_post.error_message %}<div class="err">{{ ad.fb_post.error_message[:200] }}</div>{% endif %}
+      {% endif %}
+    </div>
+    <div class="item-actions">
+      {% if ad.status == 'pending' %}
+        <form method="post" action="{{ url_for('admin.approve', ad_id=ad.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm" type="submit">Approve</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.reject', ad_id=ad.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-danger btn-sm" type="submit">Reject</button>
+        </form>
+      {% elif ad.status == 'active' and fb_ok and not (ad.fb_post and ad.fb_post.status == 'posted') %}
+        <form method="post" action="{{ url_for('admin.facebook', ad_id=ad.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-fb btn-sm" type="submit">Post to Facebook</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty"><h3>Nothing here</h3></div>
+{% endif %}
+{% endblock %}

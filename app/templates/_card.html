@@ -1,0 +1,19 @@
+<article class="card">
+  <a class="card-img" href="{{ url_for('ads.detail', ad_id=ad.id) }}">
+    {% if ad.images %}
+      <img loading="lazy" src="{{ url_for('static', filename=(ad.images|selectattr('is_primary')|first|default(ad.images[0])).file_path) }}" alt="{{ ad.title }}">
+    {% else %}<div class="no-img">No photo</div>{% endif %}
+    {% if ad.is_featured %}<span class="badge badge-featured">Featured</span>{% endif %}
+    {% if ad.status == 'sold' %}<span class="badge badge-sold">SOLD</span>{% endif %}
+  </a>
+  <button class="fav-btn {{ 'active' if ad.id in fav_ids }}" type="button" data-id="{{ ad.id }}" aria-label="Save ad">♥</button>
+  <div class="card-body">
+    <div class="price">Rs {{ ad.price|pkr }}</div>
+    <a class="card-title" href="{{ url_for('ads.detail', ad_id=ad.id) }}">{{ ad.title }}</a>
+    <div class="meta">
+      📍 {{ ad.city }}
+      {% if ad.age_months %} · {{ ad.age_months|age_text }}{% endif %}
+      {% if ad.weight_kg %} · {{ '%g'|format(ad.weight_kg) }} kg{% endif %}
+    </div>
+  </div>
+</article>

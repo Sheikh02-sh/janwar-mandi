@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ ad.title }}{% endblock %}
+{% block content %}
+{% if ad.status == 'pending' %}<div class="flash flash-info">This ad is waiting for admin approval. Only you can see it right now.</div>{% endif %}
+{% if ad.status == 'rejected' %}<div class="flash flash-error">This ad was rejected by the admin.</div>{% endif %}
+{% if ad.status == 'sold' %}<div class="flash flash-info">This animal has been sold.</div>{% endif %}
+
+<div class="detail">
+  <section class="gallery">
+    {% if ad.images %}
+      <img id="mainImg" class="main-img" src="{{ url_for('static', filename=ad.images[0].file_path) }}" alt="{{ ad.title }}">
+      {% if ad.images|length > 1 %}
+      <div class="thumbs">
+        {% for img in ad.images %}
+          <img class="thumb" src="{{ url_for('static', filename=img.file_path) }}" alt="photo {{ loop.index }}">
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% else %}<div class="no-img big">No photo</div>{% endif %}
+  </section>
+
+  <section class="info">
+    <div class="price big">Rs {{ ad.price|pkr }} {% if ad.is_negotiable %}<small>(negotiable)</small>{% endif %}</div>
+    <h1>{{ ad.title }}</h1>
+    <p class="meta">📍 {{ ad.city }}{% if ad.area %}, {{ ad.area }}{% endif %} · {{ ad.created_at.strftime('%d %b %Y') }} · 👁 {{ ad.views }} views</p>
+
+    <table class="specs">
+      <tr><th>Animal</th><td>{{ ad.category.name }}</td></tr>
+      {% if ad.breed %}<tr><th>Breed</th><td>{{ ad.breed }}</td></tr>{% endif %}
+      {% if ad.gender %}<tr><th>Gender</th><td>{{ ad.gender|capitalize }}</td></tr>{% endif %}
+      {% if ad.age_months %}<tr><th>Age</th><td>{{ ad.age_months|age_text }}</td></tr>{% endif %}
+      {% if ad.weight_kg %}<tr><th>Weight</th><td>{{ '%g'|format(ad.weight_kg) }} kg</td></tr>{% endif %}
+    </table>
+
+    {% if ad.description %}<h3>Description</h3><p class="desc">{{ ad.description }}</p>{% endif %}
+
+    <div class="seller">
+      <strong>{{ ad.seller.name }}</strong>
+      <div class="meta">Seller</div>
+      <div class="actions">
+        <a class="btn" href="tel:{{ ad.contact_phone }}">📞 Call {{ ad.contact_phone }}</a>
+        <a class="btn btn-wa" target="_blank" rel="noopener"
+           href="https://wa.me/{{ ad.contact_phone|wa_phone }}?text={{ ('Assalam o Alaikum, I saw your ad: ' ~ ad.title ~ ' on Janwar Mandi')|urlencode }}">WhatsApp</a>
+        <a class="btn btn-fb" target="_blank" rel="noopener"
+           href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}">Share on Facebook</a>
+      </div>
+    </div>
+
+    {% if is_owner or is_admin %}
+    <div class="owner-box">
+      {% if ad.status in ('active', 'pending') %}
+      <form method="post" action="{{ url_for('ads.mark_sold', ad_id=ad.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-light" type="submit">Mark as sold</button>
+      </form>
+      {% endif %}
+      <form method="post" action="{{ url_for('ads.delete', ad_id=ad.id) }}" class="inline" onsubmit="return confirm('Delete this ad permanently?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-danger" type="submit">Delete</button>
+      </form>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+{% if related %}
+<h2 class="section-title">More {{ ad.category.name }}</h2>
+<div class="grid">
+  {% for ad in related %}{% include "_card.html" %}{% endfor %}
+</div>
+{% endif %}
+{% endblock %}

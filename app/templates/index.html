@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>Buy &amp; sell livestock easily</h1>
+  <p>Goats, cows, buffaloes, camels and more — from sellers across Pakistan.</p>
+  <form class="filters" method="get" action="{{ url_for('ads.index') }}">
+    <input name="q" placeholder="Search breed, title..." value="{{ f.q }}">
+    <select name="category">
+      <option value="">All animals</option>
+      {% for c in nav_categories %}
+        <option value="{{ c.slug }}" {{ 'selected' if f.category == c.slug }}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <input name="city" list="cities" placeholder="City" value="{{ f.city }}">
+    <datalist id="cities">{% for c in cities %}<option value="{{ c }}">{% endfor %}</datalist>
+    <input name="min_price" type="number" min="0" placeholder="Min price" value="{{ f.min_price if f.min_price is not none }}">
+    <input name="max_price" type="number" min="0" placeholder="Max price" value="{{ f.max_price if f.max_price is not none }}">
+    <select name="sort">
+      <option value="new" {{ 'selected' if f.sort == 'new' }}>Newest</option>
+      <option value="price_low" {{ 'selected' if f.sort == 'price_low' }}>Price: low to high</option>
+      <option value="price_high" {{ 'selected' if f.sort == 'price_high' }}>Price: high to low</option>
+    </select>
+    <button class="btn" type="submit">Search</button>
+  </form>
+</section>
+
+{% if pagination.items %}
+  <div class="grid">
+    {% for ad in pagination.items %}{% include "_card.html" %}{% endfor %}
+  </div>
+  {% if pagination.pages > 1 %}
+  <div class="pager">
+    {% if pagination.has_prev %}<a class="btn btn-light" href="{{ url_for('ads.index', page=pagination.prev_num, **args) }}">← Prev</a>{% endif %}
+    <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    {% if pagination.has_next %}<a class="btn btn-light" href="{{ url_for('ads.index', page=pagination.next_num, **args) }}">Next →</a>{% endif %}
+  </div>
+  {% endif %}
+{% else %}
+  <div class="empty">
+    <h3>No ads found</h3>
+    <p>Try different filters, or be the first to <a href="{{ url_for('ads.create') }}">post an ad</a>.</p>
+  </div>
+{% endif %}
+{% endblock %}

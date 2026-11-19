@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Favorites{% endblock %}
+{% block content %}
+<h1>Saved ads</h1>
+{% if ads %}
+<div class="grid">{% for ad in ads %}{% include "_card.html" %}{% endfor %}</div>
+{% else %}
+<div class="empty"><h3>No saved ads</h3><p>Tap the ♥ on any ad to save it here.</p></div>
+{% endif %}
+{% endblock %}
